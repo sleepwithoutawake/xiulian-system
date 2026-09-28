@@ -1,0 +1,7 @@
+name = "xiulian-sync"
+main = "sync-worker.js"
+compatibility_date = "2026-06-03"
+
+[[kv_namespaces]]
+binding = "SYNC_STORE"
+id = "5b97e0b69a4f411c9a9090f969297172"

@@ -1,0 +1,2483 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#07111d">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="修炼系统">
+<link rel="manifest" href="./manifest.json">
+<link rel="icon" href="./app-icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="./app-icon.svg">
+<title>实习期修炼系统 · Web App</title>
+<style>
+  :root{
+    color-scheme:dark;
+    --bg:#07111d;
+    --bg-2:#0b1f22;
+    --panel:#101927;
+    --panel-2:#14263a;
+    --panel-3:#162c2d;
+    --line:#2f7180;
+    --line-soft:rgba(126, 211, 229, .22);
+    --text:#ecf6f8;
+    --muted:#a9c4cc;
+    --subtle:#6f8d96;
+    --cyan:#19d3f3;
+    --cyan-2:#1aa0b8;
+    --gold:#f1b93d;
+    --green:#46d184;
+    --red:#ff5e70;
+    --violet:#b083ff;
+    --warn:#ff9f43;
+    --shadow:0 16px 34px rgba(0,0,0,.34);
+    --radius:8px;
+    --tap:44px;
+  }
+
+  *{box-sizing:border-box;}
+  html,body{width:100%;max-width:100%;overflow-x:hidden;}
+  body{
+    margin:0;
+    min-height:100vh;
+    font-family:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+    color:var(--text);
+    background:
+      linear-gradient(135deg, rgba(25,211,243,.14) 0, transparent 28%),
+      linear-gradient(215deg, rgba(241,185,61,.10) 0, transparent 26%),
+      radial-gradient(circle at 50% -20%, #17314d 0, transparent 44%),
+      var(--bg);
+    line-height:1.45;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  button,input,textarea{font:inherit;}
+  button{color:inherit;}
+  .app-shell{
+    width:100%;
+    max-width:980px;
+    min-height:100vh;
+    margin:0 auto;
+    padding:0 12px calc(88px + env(safe-area-inset-bottom));
+  }
+
+  .top-hud{
+    position:sticky;
+    top:0;
+    z-index:20;
+    margin:0 -12px;
+    padding:calc(10px + env(safe-area-inset-top)) 12px 10px;
+    background:linear-gradient(180deg, rgba(7,17,29,.98), rgba(7,17,29,.88));
+    border-bottom:1px solid var(--line-soft);
+    backdrop-filter:blur(14px);
+  }
+  .brand-row{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    margin-bottom:10px;
+  }
+  .brand{
+    min-width:0;
+  }
+  .brand b{
+    display:block;
+    font-size:18px;
+    line-height:1.1;
+    letter-spacing:.04em;
+  }
+  .brand span{
+    display:block;
+    margin-top:3px;
+    color:var(--muted);
+    font-size:11px;
+    letter-spacing:.12em;
+    text-transform:uppercase;
+  }
+  .hud-actions{
+    display:flex;
+    gap:8px;
+    flex:none;
+  }
+  .icon-btn{
+    width:var(--tap);
+    height:var(--tap);
+    border:1px solid var(--line-soft);
+    border-radius:8px;
+    background:rgba(255,255,255,.05);
+    display:grid;
+    place-items:center;
+    cursor:pointer;
+  }
+  .icon-btn:active{transform:translateY(1px);}
+
+  .status-grid{
+    display:grid;
+    grid-template-columns:repeat(5,minmax(0,1fr));
+    gap:6px;
+  }
+  .status-chip{
+    min-width:0;
+    padding:7px 6px;
+    border:1px solid var(--line-soft);
+    background:rgba(255,255,255,.055);
+    border-radius:8px;
+  }
+  .status-chip .k{
+    display:block;
+    color:var(--subtle);
+    font-size:10px;
+    white-space:nowrap;
+  }
+  .status-chip .v{
+    display:block;
+    margin-top:2px;
+    color:var(--text);
+    font-size:13px;
+    font-weight:800;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+  .judge-perfect .v{color:var(--gold);}
+  .judge-pass .v{color:var(--green);}
+  .judge-save .v{color:var(--cyan);}
+  .judge-fail .v{color:var(--red);}
+
+  main{
+    padding:14px 0 18px;
+  }
+  .view{display:none;}
+  .view.active{display:block;}
+
+  .panel{
+    border:1px solid var(--line-soft);
+    border-radius:var(--radius);
+    background:linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,.035));
+    box-shadow:var(--shadow);
+    margin-bottom:12px;
+    overflow:hidden;
+  }
+  .panel-head{
+    padding:12px;
+    border-bottom:1px solid var(--line-soft);
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+  }
+  .panel-title{
+    min-width:0;
+  }
+  .panel-title b{
+    display:block;
+    font-size:16px;
+  }
+  .panel-title span{
+    display:block;
+    margin-top:2px;
+    color:var(--muted);
+    font-size:12px;
+  }
+  .panel-body{padding:12px;}
+
+  .quick-metrics{
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:8px;
+  }
+  .metric{
+    min-width:0;
+    border:1px solid var(--line-soft);
+    border-radius:8px;
+    background:rgba(6,12,20,.42);
+    padding:10px;
+  }
+  .metric .label{
+    color:var(--muted);
+    font-size:12px;
+  }
+  .metric .num{
+    margin-top:4px;
+    font-size:22px;
+    font-weight:900;
+    letter-spacing:.02em;
+  }
+  .metric .hint{
+    margin-top:4px;
+    color:var(--subtle);
+    font-size:11px;
+  }
+  .metric.strong .num{color:var(--gold);}
+
+  details.zone{
+    border:1px solid var(--line-soft);
+    border-radius:var(--radius);
+    background:rgba(11,31,34,.58);
+    margin-bottom:10px;
+    overflow:hidden;
+  }
+  details.zone[open]{background:rgba(14,35,47,.78);}
+  .zone summary{
+    list-style:none;
+    min-height:56px;
+    padding:10px 12px;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+  }
+  .zone summary::-webkit-details-marker{display:none;}
+  .zone-name{
+    display:flex;
+    align-items:center;
+    gap:9px;
+    min-width:0;
+  }
+  .zone-icon{
+    flex:none;
+    width:34px;
+    height:34px;
+    border:1px solid var(--line-soft);
+    border-radius:8px;
+    display:grid;
+    place-items:center;
+    background:rgba(25,211,243,.10);
+    font-size:18px;
+  }
+  .zone-copy{min-width:0;}
+  .zone-copy b{
+    display:block;
+    font-size:14px;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+  .zone-copy span{
+    display:block;
+    color:var(--muted);
+    font-size:11px;
+  }
+  .zone-score{
+    flex:none;
+    text-align:right;
+    color:var(--cyan);
+    font-weight:900;
+    font-size:13px;
+  }
+  .zone-body{
+    border-top:1px solid var(--line-soft);
+    padding:10px 10px 12px;
+  }
+  .group-title{
+    margin:10px 2px 7px;
+    color:var(--cyan);
+    font-size:12px;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+  }
+  .group-title:first-child{margin-top:0;}
+  .protocol-line{
+    margin:8px 0;
+    border:1px dashed rgba(255,94,112,.46);
+    color:#ffd6dc;
+    background:rgba(255,94,112,.10);
+    border-radius:8px;
+    padding:8px 10px;
+    font-size:12px;
+  }
+  .task-row{
+    width:100%;
+    min-height:var(--tap);
+    margin:6px 0;
+    border:1px solid var(--line-soft);
+    border-radius:8px;
+    background:rgba(255,255,255,.045);
+    display:grid;
+    grid-template-columns:34px minmax(0,1fr) auto;
+    gap:8px;
+    align-items:center;
+    padding:8px;
+    text-align:left;
+    cursor:pointer;
+  }
+  .task-row.done{
+    border-color:rgba(70,209,132,.62);
+    background:rgba(70,209,132,.12);
+  }
+  .task-row.boss{
+    border-color:rgba(241,185,61,.64);
+    background:linear-gradient(90deg, rgba(241,185,61,.12), rgba(255,255,255,.035));
+  }
+  .task-row.debt{
+    border-color:rgba(255,94,112,.66);
+    background:rgba(255,94,112,.12);
+  }
+  .task-check{
+    width:30px;
+    height:30px;
+    border:1px solid var(--line-soft);
+    border-radius:8px;
+    display:grid;
+    place-items:center;
+    color:transparent;
+    font-weight:900;
+    background:rgba(0,0,0,.22);
+  }
+  .done .task-check{
+    color:#062314;
+    border-color:var(--green);
+    background:var(--green);
+  }
+  .task-copy{min-width:0;}
+  .task-copy b{
+    display:block;
+    font-size:14px;
+    font-weight:750;
+  }
+  .task-copy small{
+    display:block;
+    margin-top:2px;
+    color:var(--muted);
+    font-size:12px;
+  }
+  .task-tags{
+    display:flex;
+    flex-direction:column;
+    align-items:flex-end;
+    gap:4px;
+  }
+  .badge{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    min-height:22px;
+    max-width:100%;
+    padding:2px 7px;
+    border-radius:999px;
+    border:1px solid var(--line-soft);
+    color:var(--muted);
+    font-size:11px;
+    white-space:nowrap;
+  }
+  .badge.xp{
+    color:var(--gold);
+    border-color:rgba(241,185,61,.52);
+    background:rgba(241,185,61,.10);
+    font-weight:900;
+  }
+  .badge.boss{
+    color:var(--gold);
+    border-color:rgba(241,185,61,.62);
+  }
+  .badge.red{
+    color:#ffd0d7;
+    border-color:rgba(255,94,112,.58);
+    background:rgba(255,94,112,.12);
+  }
+  .badge.green{
+    color:#c8ffe0;
+    border-color:rgba(70,209,132,.58);
+    background:rgba(70,209,132,.12);
+  }
+  .badge.cyan{
+    color:#d2f8ff;
+    border-color:rgba(25,211,243,.58);
+    background:rgba(25,211,243,.10);
+  }
+  .badge.gold{
+    color:#ffe8a6;
+    border-color:rgba(241,185,61,.58);
+    background:rgba(241,185,61,.10);
+  }
+
+  .plan-grid{
+    display:grid;
+    gap:8px;
+  }
+  .plan-box{
+    border:1px dashed rgba(25,211,243,.42);
+    border-radius:8px;
+    padding:9px;
+    background:rgba(25,211,243,.055);
+  }
+  .plan-box b{
+    display:block;
+    color:var(--cyan);
+    font-size:12px;
+    letter-spacing:.08em;
+    margin-bottom:7px;
+  }
+  .form-row{
+    display:grid;
+    gap:5px;
+    margin:8px 0;
+  }
+  .form-row label{
+    color:var(--muted);
+    font-size:12px;
+  }
+  input[type="text"],textarea{
+    width:100%;
+    min-height:42px;
+    border:1px solid var(--line-soft);
+    border-radius:8px;
+    background:rgba(0,0,0,.24);
+    color:var(--text);
+    padding:9px 10px;
+    outline:none;
+  }
+  textarea{
+    min-height:88px;
+    resize:vertical;
+  }
+  input[type="text"]:focus,textarea:focus{
+    border-color:var(--cyan);
+    box-shadow:0 0 0 2px rgba(25,211,243,.12);
+  }
+
+  .rating-list{
+    display:grid;
+    gap:10px;
+  }
+  .rating-row{
+    display:grid;
+    grid-template-columns:70px minmax(0,1fr) 44px;
+    gap:10px;
+    align-items:center;
+  }
+  .rating-row label{
+    color:var(--muted);
+    font-size:13px;
+  }
+  .rating-row output{
+    color:var(--gold);
+    text-align:right;
+    font-weight:900;
+  }
+  input[type="range"]{
+    width:100%;
+    accent-color:var(--cyan);
+    min-height:32px;
+  }
+  .alert{
+    display:none;
+    margin-top:10px;
+    border:1px solid rgba(255,159,67,.55);
+    border-radius:8px;
+    color:#ffe6c8;
+    background:rgba(255,159,67,.12);
+    padding:9px 10px;
+    font-size:13px;
+  }
+  .alert.show{display:block;}
+
+  .button-row{
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+  }
+  .btn{
+    min-height:var(--tap);
+    border:1px solid var(--line-soft);
+    border-radius:8px;
+    background:rgba(255,255,255,.06);
+    padding:9px 12px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:7px;
+    cursor:pointer;
+    font-weight:750;
+  }
+  .btn.primary{
+    border-color:rgba(25,211,243,.72);
+    background:linear-gradient(180deg, rgba(25,211,243,.28), rgba(25,211,243,.14));
+    color:#eaffff;
+  }
+  .btn.gold{
+    border-color:rgba(241,185,61,.68);
+    background:linear-gradient(180deg, rgba(241,185,61,.24), rgba(241,185,61,.12));
+  }
+  .btn.danger{
+    border-color:rgba(255,94,112,.68);
+    background:rgba(255,94,112,.13);
+  }
+  .btn:disabled{
+    opacity:.48;
+    filter:grayscale(1);
+    cursor:not-allowed;
+  }
+
+  .settlement-grid,.shop-grid,.history-grid{
+    display:grid;
+    gap:10px;
+  }
+  .settlement-grid{grid-template-columns:repeat(2,minmax(0,1fr));}
+  .shop-grid{grid-template-columns:1fr;}
+  .shop-card{
+    border:1px solid var(--line-soft);
+    border-radius:8px;
+    background:rgba(255,255,255,.045);
+    padding:10px;
+    display:grid;
+    gap:8px;
+  }
+  .shop-card.locked,.shop-card.frozen{opacity:.58;}
+  .shop-top{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:10px;
+  }
+  .shop-card b{display:block;font-size:15px;}
+  .shop-card small{
+    display:block;
+    color:var(--muted);
+    margin-top:3px;
+    font-size:12px;
+  }
+
+  .realm-hero{
+    display:grid;
+    grid-template-columns:1fr;
+    gap:8px;
+  }
+  .progress{
+    width:100%;
+    height:10px;
+    border:1px solid var(--line-soft);
+    border-radius:999px;
+    overflow:hidden;
+    background:rgba(0,0,0,.26);
+  }
+  .progress span{
+    display:block;
+    height:100%;
+    width:0;
+    background:linear-gradient(90deg,var(--cyan),var(--gold));
+  }
+  .realm-map details{
+    border:1px solid var(--line-soft);
+    border-radius:8px;
+    margin-bottom:10px;
+    overflow:hidden;
+    background:rgba(255,255,255,.04);
+  }
+  .realm-map summary{
+    min-height:52px;
+    list-style:none;
+    padding:10px 12px;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+  }
+  .realm-map summary::-webkit-details-marker{display:none;}
+  .rank-grid{
+    padding:10px;
+    display:grid;
+    grid-template-columns:1fr;
+    gap:8px;
+    border-top:1px solid var(--line-soft);
+  }
+  .rank-card{
+    border:1px solid var(--line-soft);
+    border-radius:8px;
+    padding:9px;
+    background:rgba(0,0,0,.16);
+  }
+  .rank-card.current{
+    border-color:rgba(241,185,61,.72);
+    background:rgba(241,185,61,.10);
+  }
+  .rank-card b{font-size:14px;}
+  .rank-card small{
+    color:var(--muted);
+    display:block;
+    margin:3px 0 8px;
+  }
+  .layer-grid{
+    display:grid;
+    grid-template-columns:repeat(12,minmax(0,1fr));
+    gap:3px;
+  }
+  .layer-grid i{
+    height:12px;
+    border:1px solid var(--line-soft);
+    border-radius:2px;
+    background:rgba(255,255,255,.035);
+  }
+  .layer-grid i.active{background:var(--cyan);border-color:var(--cyan);}
+  .rank-card.current .layer-grid i.active{background:var(--gold);border-color:var(--gold);}
+
+  .history-item{
+    border:1px solid var(--line-soft);
+    border-radius:8px;
+    background:rgba(255,255,255,.045);
+    padding:10px;
+  }
+  .history-main{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:10px;
+  }
+  .history-main b{font-size:15px;}
+  .history-main span{color:var(--muted);font-size:12px;}
+  .history-tags{
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px;
+    margin-top:8px;
+  }
+  .empty{
+    color:var(--muted);
+    border:1px dashed var(--line-soft);
+    border-radius:8px;
+    padding:14px;
+    text-align:center;
+  }
+
+  .bottom-nav{
+    position:fixed;
+    left:0;
+    right:0;
+    bottom:0;
+    z-index:30;
+    padding:8px 10px calc(8px + env(safe-area-inset-bottom));
+    background:linear-gradient(180deg, rgba(7,17,29,.72), rgba(7,17,29,.98));
+    border-top:1px solid var(--line-soft);
+    backdrop-filter:blur(14px);
+  }
+  .nav-inner{
+    max-width:980px;
+    margin:0 auto;
+    display:grid;
+    grid-template-columns:repeat(5,minmax(0,1fr));
+    gap:6px;
+  }
+  .nav-btn{
+    min-width:0;
+    min-height:52px;
+    border:1px solid transparent;
+    border-radius:8px;
+    background:transparent;
+    color:var(--muted);
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:2px;
+    cursor:pointer;
+  }
+  .nav-btn b{
+    font-size:18px;
+    line-height:1;
+  }
+  .nav-btn span{
+    font-size:11px;
+  }
+  .nav-btn.active{
+    color:var(--text);
+    border-color:var(--line-soft);
+    background:rgba(25,211,243,.10);
+  }
+
+  .toast{
+    position:fixed;
+    left:50%;
+    bottom:86px;
+    transform:translateX(-50%) translateY(20px);
+    z-index:50;
+    width:min(460px, calc(100vw - 24px));
+    border:1px solid var(--line-soft);
+    border-radius:8px;
+    background:#0d1b2a;
+    box-shadow:var(--shadow);
+    padding:11px 12px;
+    color:var(--text);
+    opacity:0;
+    pointer-events:none;
+    transition:opacity .18s ease, transform .18s ease;
+  }
+  .toast.show{
+    opacity:1;
+    transform:translateX(-50%) translateY(0);
+  }
+
+  .sr-only{
+    position:absolute;
+    width:1px;
+    height:1px;
+    overflow:hidden;
+    clip:rect(0,0,0,0);
+    white-space:nowrap;
+  }
+
+  @media (min-width:720px){
+    .app-shell{padding-left:18px;padding-right:18px;}
+    .top-hud{margin-left:-18px;margin-right:-18px;padding-left:18px;padding-right:18px;}
+    .status-grid{gap:8px;}
+    .quick-metrics{grid-template-columns:repeat(4,minmax(0,1fr));}
+    .shop-grid{grid-template-columns:repeat(2,minmax(0,1fr));}
+    .history-grid{grid-template-columns:repeat(2,minmax(0,1fr));}
+    .rank-grid{grid-template-columns:repeat(2,minmax(0,1fr));}
+    .realm-hero{grid-template-columns:1.1fr .9fr;}
+  }
+
+  @media print{
+    body{background:#fff;color:#111;}
+    .top-hud,.bottom-nav,.hud-actions,.button-row,.toast{display:none!important;}
+    .app-shell{max-width:none;padding:0;}
+    .view{display:block!important;break-after:page;}
+    .panel,details.zone,.history-item,.shop-card,.rank-card{box-shadow:none;background:#fff;color:#111;border-color:#333;}
+    .panel-head,.zone-body{border-color:#333;}
+    .badge,.metric .label,.panel-title span,.task-copy small{color:#333;}
+  }
+</style>
+</head>
+<body>
+<div class="app-shell">
+  <header class="top-hud">
+    <div class="brand-row">
+      <div class="brand">
+        <b>实习期 · 修炼系统</b>
+        <span>Daily Cultivation Protocol</span>
+      </div>
+      <div class="hud-actions">
+        <button class="icon-btn" type="button" data-action="install-app" title="安装为 App" aria-label="安装为 App">⇩</button>
+        <button class="icon-btn" type="button" data-action="print" title="打印当前系统" aria-label="打印当前系统">⎙</button>
+      </div>
+    </div>
+    <div id="top-status" class="status-grid" aria-live="polite"></div>
+  </header>
+
+  <main>
+    <section id="view-today" class="view active" aria-label="今日任务">
+      <div class="panel">
+        <div class="panel-head">
+          <div class="panel-title">
+            <b>今日作战 HUD</b>
+            <span id="today-date-label">DATE</span>
+          </div>
+          <span id="today-judge-badge" class="badge">判定</span>
+        </div>
+        <div class="panel-body">
+          <div id="quick-metrics" class="quick-metrics"></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <div class="panel-title">
+            <b>状态评分</b>
+            <span>体力 / 专注 / 自律会实时影响 XP 倍率</span>
+          </div>
+          <span id="multiplier-badge" class="badge cyan">×1.0</span>
+        </div>
+        <div class="panel-body">
+          <div id="rating-list" class="rating-list"></div>
+          <div id="health-alert" class="alert"></div>
+        </div>
+      </div>
+
+      <div id="today-zones"></div>
+    </section>
+
+    <section id="view-settle" class="view" aria-label="结算">
+      <div class="panel">
+        <div class="panel-head">
+          <div class="panel-title">
+            <b>结算面板</b>
+            <span>所有结果由任务状态和评分实时推导</span>
+          </div>
+          <span id="settle-judge-badge" class="badge">判定</span>
+        </div>
+        <div class="panel-body">
+          <div id="settlement-grid" class="settlement-grid"></div>
+          <div class="button-row" style="margin-top:12px">
+            <button class="btn primary" type="button" data-action="settle">⚑ 每日结算</button>
+            <button class="btn" type="button" data-action="reset-today">↻ 重置今日</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <div class="panel-title">
+            <b>惩罚 / 异常</b>
+            <span>所有动作都会二次确认并写入记录</span>
+          </div>
+          <span id="amulet-badge" class="badge gold">免罚符</span>
+        </div>
+        <div class="panel-body">
+          <div class="button-row">
+            <button class="btn danger" type="button" data-action="penalty-free-ride">⚠ 白嫖娱乐</button>
+            <button class="btn danger" type="button" data-action="penalty-late-night">☾ 标记熬夜</button>
+            <button class="btn gold" type="button" data-action="use-amulet">✦ 使用免罚符</button>
+            <button class="btn" type="button" data-action="accident-day">✚ 生病/意外日</button>
+          </div>
+          <div id="penalty-log" style="margin-top:12px"></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="view-shop" class="view" aria-label="奖励商店">
+      <div class="panel">
+        <div class="panel-head">
+          <div class="panel-title">
+            <b>奖励商店</b>
+            <span>娱乐不是禁止，是要用 XP 购买</span>
+          </div>
+          <span id="shop-balance" class="badge gold">余额 0</span>
+        </div>
+        <div class="panel-body">
+          <div id="shop-freeze-alert" class="alert"></div>
+          <div id="shop-grid" class="shop-grid"></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="view-realm" class="view" aria-label="境界">
+      <div class="panel">
+        <div class="panel-head">
+          <div class="panel-title">
+            <b>境界图谱</b>
+            <span>累计 XP + 连击门槛双轨达标</span>
+          </div>
+          <span id="realm-badge" class="badge cyan">修真界</span>
+        </div>
+        <div class="panel-body">
+          <div id="realm-hero" class="realm-hero"></div>
+        </div>
+      </div>
+      <div id="realm-map" class="realm-map"></div>
+    </section>
+
+    <section id="view-history" class="view" aria-label="历史">
+      <div class="panel">
+        <div class="panel-head">
+          <div class="panel-title">
+            <b>历史记录</b>
+            <span>最近 7 天 / 30 天统计和结算记录</span>
+          </div>
+          <span id="history-count" class="badge">0 天</span>
+        </div>
+        <div class="panel-body">
+          <div id="history-stats" class="quick-metrics"></div>
+          <div id="history-list" class="history-grid" style="margin-top:12px"></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <div class="panel-title">
+            <b>数据舱</b>
+            <span>导出、导入、重置，以及可选的加密云同步</span>
+          </div>
+        </div>
+        <div class="panel-body">
+          <div class="plan-box" style="margin-bottom:12px">
+            <b>SYNC CHANNEL · 免费自动同步</b>
+            <div class="form-row">
+              <label for="sync-endpoint">Cloudflare Worker 地址</label>
+              <input id="sync-endpoint" type="text" placeholder="https://你的-worker.workers.dev">
+            </div>
+            <div class="form-row">
+              <label for="sync-secret">同步密钥</label>
+              <input id="sync-secret" type="password" placeholder="手机和电脑填写同一个密钥">
+            </div>
+            <div class="button-row">
+              <button class="btn primary" type="button" data-action="enable-sync">开启自动同步</button>
+              <button class="btn" type="button" data-action="sync-now">立即同步</button>
+              <button class="btn" type="button" data-action="generate-sync-secret">生成密钥</button>
+              <button class="btn danger" type="button" data-action="disable-sync">关闭同步</button>
+            </div>
+            <div id="sync-status" class="alert show" style="margin-top:10px"></div>
+          </div>
+          <div class="button-row">
+            <button class="btn" type="button" data-action="export-data">⇧ 导出数据</button>
+            <label class="btn" for="import-file">⇩ 导入数据</label>
+            <input id="import-file" class="sr-only" type="file" accept="application/json,.json">
+            <button class="btn danger" type="button" data-action="reset-all">× 重置全部</button>
+          </div>
+          <div id="exchange-log" style="margin-top:12px"></div>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<nav class="bottom-nav" aria-label="主导航">
+  <div class="nav-inner">
+    <button class="nav-btn active" type="button" data-view="today"><b>☰</b><span>今日</span></button>
+    <button class="nav-btn" type="button" data-view="settle"><b>⚑</b><span>结算</span></button>
+    <button class="nav-btn" type="button" data-view="shop"><b>◈</b><span>商店</span></button>
+    <button class="nav-btn" type="button" data-view="realm"><b>△</b><span>境界</span></button>
+    <button class="nav-btn" type="button" data-view="history"><b>≡</b><span>历史</span></button>
+  </div>
+</nav>
+
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+<script>
+(() => {
+  "use strict";
+
+  /* =========================
+     数据模型
+  ========================= */
+  const STORAGE_KEY = "cultivation-system-webapp-v1";
+  const SYNC_SETTINGS_KEY = "cultivation-system-sync-settings-v1";
+  const DEVICE_ID_KEY = "cultivation-system-device-id-v1";
+  const CURRENT_SCHEMA = 1;
+  const VIEWS = ["today", "settle", "shop", "realm", "history"];
+  const SYNC_DEBOUNCE_MS = 1400;
+  const SYNC_POLL_MS = 30000;
+  const DEFAULT_SYNC_ENDPOINT = "https://xiulian-sync.maoxiangyu199.workers.dev";
+
+  const ratingConfig = [
+    {key:"energy", label:"体力", code:"ENERGY"},
+    {key:"focus", label:"专注", code:"FOCUS"},
+    {key:"discipline", label:"自律", code:"WILL"}
+  ];
+
+  /* =========================
+     任务配置
+  ========================= */
+  const zones = [
+    {
+      id:"morning",
+      icon:"☼",
+      title:"晨启 · 认知唤醒区",
+      time:"07:30-11:50",
+      open:true,
+      groups:[
+        {
+          title:"QUEST · 生理唤醒",
+          tasks:[
+            {id:"wake-bed", name:"起身离床", xp:5},
+            {id:"pushups", name:"俯卧撑 ×25", xp:15},
+            {id:"wash-morning", name:"洗漱", xp:5},
+            {id:"breathing", name:"慢呼吸 30-60s", desc:"鼻吸4s -> 停1s -> 口呼6s ×4-6", xp:10}
+          ],
+          protocol:"起床后 10 分钟内不碰手机 / 不聊天 / 不接收信息"
+        },
+        {title:"QUEST · 计划区 · 今日两个核心目标", type:"plans"},
+        {
+          title:"QUEST · 低刺激启动",
+          tasks:[
+            {id:"low-stim", name:"听力或连续阅读", desc:"≤70% 难度，进入延迟奖励模式", xp:20}
+          ]
+        },
+        {
+          title:"QUEST · 做饭 / 吃饭",
+          tasks:[
+            {id:"cook-listen", name:"可继续听力 · 不聊天 · 不刷内容", xp:10}
+          ]
+        },
+        {
+          title:"BOSS BATTLE · 上午深度区",
+          tasks:[
+            {id:"boss-am", name:"上午深度块：专项内容推进", desc:"2.5-3h，不社交、不娱乐", xp:80, boss:true}
+          ],
+          protocol:"仅允许 ≤30s 功能性沟通，无寒暄"
+        }
+      ]
+    },
+    {
+      id:"noon",
+      icon:"◇",
+      title:"正午 · 恢复区",
+      time:"11:50-14:00",
+      groups:[
+        {
+          title:"RECOVERY · 恢复任务",
+          tasks:[
+            {id:"lunch", name:"做饭、吃饭", xp:10},
+            {id:"girlfriend-chat", name:"和女朋友聊天", desc:"允许 & 推荐，这是恢复任务", xp:15}
+          ]
+        }
+      ]
+    },
+    {
+      id:"afternoon",
+      icon:"◆",
+      title:"午后 · 专注区",
+      time:"14:00-17:40",
+      open:true,
+      groups:[
+        {
+          title:"BOSS BATTLE · 下午深度推进",
+          tasks:[
+            {id:"boss-pm", name:"下午深度块：专项内容推进", desc:"3h 左右，守住第二认知成果", xp:80, boss:true}
+          ],
+          protocol:"不社交 · 不娱乐 · 仅允许 ≤30s 功能性沟通"
+        }
+      ]
+    },
+    {
+      id:"transition",
+      icon:"◎",
+      title:"状态过渡区",
+      time:"17:40-21:00",
+      groups:[
+        {
+          title:"QUEST · 体能 & 重置",
+          tasks:[
+            {id:"exercise", name:"运动 1h", desc:"羽毛球 / 长跑 / 健身", xp:40},
+            {id:"shower", name:"洗澡", xp:5},
+            {id:"dinner", name:"做饭、吃饭", xp:10}
+          ]
+        }
+      ]
+    },
+    {
+      id:"night",
+      icon:"☾",
+      title:"夜间 · 稳定推进区",
+      time:"21:10-23:30",
+      groups:[
+        {
+          title:"QUEST · 模块1 听力影子跟读",
+          tasks:[
+            {id:"audio-once", name:"听原音 1 遍", xp:10},
+            {id:"shadowing", name:"影子跟读 1 遍", xp:20},
+            {id:"read-transcript", name:"看原文听", desc:"可选任务", xp:10, optional:true},
+            {id:"vocab", name:"整理重复的陌生词汇", desc:"周日改为复习本周单词", xp:15}
+          ],
+          protocol:"姿态：站 / 走 / 坐直，不躺、不刷"
+        },
+        {
+          title:"QUEST · 模块2 总结与降速",
+          tasks:[
+            {id:"summary", name:"写 3 行总结", desc:"完成了什么 / 明天第一步 / 一个发现", xp:20},
+            {id:"reading-meditation", name:"看书 / 冥想 / 写周记", xp:10}
+          ]
+        },
+        {
+          title:"QUEST · 模块3+4 收尾 & 入睡",
+          tasks:[
+            {id:"desk-clean", name:"整理桌面", xp:5},
+            {id:"wash-stretch", name:"洗漱 / 拉伸", xp:5},
+            {id:"sleep-2330", name:"23:30 前熄灯入睡", desc:"PERFECT 判定条件之一", xp:30}
+          ],
+          protocol:"不输入新信息 · 不刷短剧 / 小说"
+        }
+      ]
+    }
+  ];
+
+  const allTasks = zones.flatMap(zone =>
+    zone.groups.flatMap(group => (group.tasks || []).map(task => ({
+      ...task,
+      zoneId:zone.id,
+      zoneTitle:zone.title
+    })))
+  );
+
+  /* =========================
+     奖励配置
+  ========================= */
+  const rewards = [
+    {id:"drama-episode", name:"短剧 / 小说 1 集", desc:"只在商店买，不白嫖", cost:120},
+    {id:"milk-tea", name:"一杯奶茶 / 爱吃的", desc:"味觉奖励", cost:150},
+    {id:"movie", name:"追一部想看的电影", desc:"整块沉浸，不掺手机", cost:200},
+    {id:"sleep-show", name:"睡前刷剧 30 min", desc:"仅当 23:00 前完成收尾", cost:200},
+    {id:"half-day", name:"半天纯放空 / 出门闲逛", desc:"无任务、无愧疚", cost:400, requires:"筑基"},
+    {id:"lazy-weekend", name:"周末睡懒觉", desc:"筑基以上可兑换", cost:500, requires:"筑基"},
+    {id:"small-treat", name:"小犒赏", desc:"书 / 外设 / 球拍 / 一顿好饭", cost:900, requires:"金丹"},
+    {id:"mid-treat", name:"中犒赏", desc:"耳机 / 键盘 / 衣服 / 短途游", cost:2400, requires:"化神"},
+    {id:"big-treat", name:"大犒赏", desc:"设备 / 手表 / 正经旅行", cost:6000, requires:"炼虚"},
+    {id:"peak-treat", name:"巅峰犒赏", desc:"长期想要的大件或长途旅行", cost:12000, requires:"大乘 / 帝境"}
+  ];
+
+  /* =========================
+     境界规则
+
+     原文件只给出长期校准口径：修真界每层约 900 XP、仙界每层约 9500 XP、
+     神界每层约 19000 XP。这里保留该口径，并用“每个小境界 12 层”的规则展开。
+  ========================= */
+  const realmWorlds = [
+    {
+      world:"修真界",
+      code:"CULTIVATION",
+      layerXp:900,
+      ranks:[
+        {name:"炼气", req:0, meta:"起始 · 把系统跑起来"},
+        {name:"筑基", req:7, meta:"突破需连击 7"},
+        {name:"金丹", req:14, meta:"连击 14 · 解锁小犒赏"},
+        {name:"元婴", req:21, meta:"突破需连击 21"},
+        {name:"化神", req:30, meta:"连击 30 · 解锁中犒赏"},
+        {name:"炼虚", req:38, meta:"连击 38 · 解锁大犒赏"},
+        {name:"合体", req:45, meta:"突破需连击 45"},
+        {name:"大乘 / 帝境", req:52, meta:"连击 52 · 解锁巅峰犒赏"}
+      ]
+    },
+    {
+      world:"仙界",
+      code:"IMMORTAL",
+      layerXp:9500,
+      ranks:[
+        {name:"天仙", req:60, meta:"突破需连击 60"},
+        {name:"玄仙", req:75, meta:"连击 75 · 巅峰犒赏×2"},
+        {name:"金仙", req:90, meta:"突破需连击 90"},
+        {name:"太乙金仙", req:100, meta:"连击 100 · 解锁年度大犒赏"},
+        {name:"大罗金仙", req:130, meta:"突破需连击 130"},
+        {name:"道元 / 道君", req:180, meta:"连击 180 · 自定终身奖励"},
+        {name:"混元", req:220, meta:"仙界圆满"}
+      ]
+    },
+    {
+      world:"神界",
+      code:"DIVINE",
+      layerXp:19000,
+      ranks:[
+        {name:"神将境", req:250, meta:"连击 250 · 十年功成"},
+        {name:"神御境", req:400, meta:"突破需连击 400"},
+        {name:"神灵境", req:600, meta:"连击 600 · 自定人生奖励"},
+        {name:"神君境", req:850, meta:"突破需连击 850"},
+        {name:"神尊境", req:1100, meta:"连击 1100 · 二十年成就"},
+        {name:"神王境", req:1400, meta:"突破需连击 1400"},
+        {name:"神皇境", req:1800, meta:"突破需连击 1800"},
+        {name:"神帝 / 封号神帝", req:2200, meta:"天花板 · 一生的封号"}
+      ]
+    }
+  ];
+
+  const flatRealms = (() => {
+    let cursor = 0;
+    const out = [];
+    realmWorlds.forEach(world => {
+      world.ranks.forEach(rank => {
+        const total = world.layerXp * 12;
+        out.push({
+          world:world.world,
+          code:world.code,
+          name:rank.name,
+          meta:rank.meta,
+          streakReq:rank.req,
+          layerXp:world.layerXp,
+          startXp:cursor,
+          endXp:cursor + total,
+          totalXp:total,
+          index:out.length
+        });
+        cursor += total;
+      });
+    });
+    return out;
+  })();
+
+  /* =========================
+     XP 规则
+  ========================= */
+  function multiplierForRatings(ratings){
+    const avg = (Number(ratings.energy) + Number(ratings.focus) + Number(ratings.discipline)) / 3;
+    if(avg >= 8) return {value:1.2, avg, label:"状态爆发"};
+    if(avg >= 5) return {value:1.0, avg, label:"稳定运行"};
+    if(avg >= 3) return {value:0.8, avg, label:"低功率运行"};
+    return {value:0.6, avg, label:"亚健康预警，建议强制早睡"};
+  }
+
+  function defaultToday(date = todayKey()){
+    return {
+      date,
+      completed:{},
+      plans:[
+        {result:"", block:"", stop:""},
+        {result:"", block:"", stop:""}
+      ],
+      ratings:{energy:5, focus:5, discipline:5},
+      notes:{summary:"", tomorrow:"", discovery:""},
+      flags:{accidentShield:false, accident:false},
+      debtTasks:[]
+    };
+  }
+
+  function defaultState(){
+    return {
+      schema:CURRENT_SCHEMA,
+      meta:{updatedAt:new Date().toISOString(), deviceId:getDeviceId()},
+      today:defaultToday(),
+      history:[],
+      redemptions:[],
+      penalties:[],
+      amulets:{month:monthKey(), used:0},
+      effects:{sleepPenaltyDate:null},
+      profile:{
+        totalXp:0,
+        spendableXp:0,
+        streak:0,
+        failStreak:0,
+        shopFrozenUntil:null,
+        realm:computeRealm(0, 0, 0)
+      }
+    };
+  }
+
+  /* =========================
+     状态管理
+  ========================= */
+  let state = loadState();
+  let syncSettings = loadSyncSettings();
+  let syncState = {busy:false, pending:false, lastSyncAt:null, status:"未开启同步", error:"", timer:null, pollTimer:null};
+  let uiState = {
+    openZones:new Set(zones.map(zone => zone.id)),
+    openRealmWorlds:new Set(realmWorlds.map(world => world.world))
+  };
+  let activeView = "today";
+  let deferredInstallPrompt = null;
+
+  function loadState(){
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(!raw) return normalizeState(defaultState());
+    try{
+      return normalizeState(JSON.parse(raw));
+    }catch(error){
+      console.warn("无法解析本地数据，已启动空状态", error);
+      return normalizeState(defaultState());
+    }
+  }
+
+  function normalizeState(input){
+    const base = defaultState();
+    const s = {...base, ...(input || {})};
+    s.meta = {...base.meta, ...(s.meta || {}), deviceId:(s.meta && s.meta.deviceId) || getDeviceId()};
+    s.today = {...defaultToday(s.today && s.today.date), ...(s.today || {})};
+    s.today.completed = {...(s.today.completed || {})};
+    s.today.ratings = {...defaultToday().ratings, ...(s.today.ratings || {})};
+    s.today.flags = {...defaultToday().flags, ...(s.today.flags || {})};
+    s.today.plans = Array.isArray(s.today.plans) ? s.today.plans.slice(0, 2) : defaultToday().plans;
+    while(s.today.plans.length < 2) s.today.plans.push({result:"", block:"", stop:""});
+    s.today.notes = {...defaultToday().notes, ...(s.today.notes || {})};
+    s.today.debtTasks = Array.isArray(s.today.debtTasks) ? s.today.debtTasks : [];
+    s.history = Array.isArray(s.history) ? s.history : [];
+    s.redemptions = Array.isArray(s.redemptions) ? s.redemptions : [];
+    s.penalties = Array.isArray(s.penalties) ? s.penalties : [];
+    s.amulets = {...base.amulets, ...(s.amulets || {})};
+    s.effects = {...base.effects, ...(s.effects || {})};
+    s.profile = {...base.profile, ...(s.profile || {})};
+
+    if(s.today.date !== todayKey()){
+      s.today = defaultToday(todayKey());
+    }
+    ensureAmuletMonth(s);
+    applyDailyEffects(s);
+    recalculateProfile(s);
+    return s;
+  }
+
+  function persist(options = {}){
+    const shouldTouch = options.touch !== false;
+    const shouldSync = options.sync !== false;
+    ensureAmuletMonth(state);
+    applyDailyEffects(state);
+    if(shouldTouch){
+      state.meta = {...(state.meta || {}), updatedAt:new Date().toISOString(), deviceId:getDeviceId()};
+    }
+    recalculateProfile(state);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    if(shouldSync) scheduleAutoSync();
+  }
+
+  function applyDailyEffects(s){
+    if(s.effects.sleepPenaltyDate === s.today.date && Number(s.today.ratings.energy) > 7){
+      s.today.ratings.energy = 7;
+    }
+  }
+
+  function ensureAmuletMonth(s){
+    const currentMonth = monthKey();
+    if(!s.amulets || s.amulets.month !== currentMonth){
+      s.amulets = {month:currentMonth, used:0};
+    }
+  }
+
+  function recalculateProfile(s){
+    const sorted = [...s.history].sort((a,b) => a.date.localeCompare(b.date));
+    let totalXp = 0;
+    let streak = 0;
+    let failRun = 0;
+    let shopFrozenUntil = null;
+
+    sorted.forEach(record => {
+      totalXp += Number(record.finalXp || 0);
+      if(Number(record.finalXp || 0) < 100){
+        shopFrozenUntil = maxDate(shopFrozenUntil, addDays(record.date, 1));
+      }
+
+      if(record.judgment === "PERFECT" || record.judgment === "PASS"){
+        streak += 1;
+        failRun = 0;
+      }else if(record.judgment === "SAVE"){
+        failRun = 0;
+      }else{
+        failRun += 1;
+        streak = failRun >= 2 ? 0 : Math.max(0, streak - 1);
+      }
+      record.streakAfter = streak;
+    });
+
+    const redemptionCost = s.redemptions.reduce((sum, item) => sum + Number(item.cost || 0), 0);
+    const penaltyCost = s.penalties.reduce((sum, item) => sum + Number(item.amount || 0), 0);
+    const realmDropOffset = s.penalties
+      .filter(item => item.type === "realm-drop")
+      .reduce((sum, item) => sum + Number(item.realmDropOffset || 0), 0);
+
+    s.history = sorted;
+    s.profile = {
+      totalXp,
+      spendableXp:totalXp - redemptionCost - penaltyCost,
+      streak,
+      failStreak:failRun,
+      shopFrozenUntil,
+      realm:computeRealm(totalXp, streak, realmDropOffset)
+    };
+  }
+
+  function computeMetrics(){
+    const completedTasks = getTodayTasks().filter(task => state.today.completed[task.id]);
+    const rawXp = completedTasks.reduce((sum, task) => sum + Number(task.xp || 0), 0);
+    const multiplier = multiplierForRatings(state.today.ratings);
+    const baseFinalXp = Math.round(rawXp * multiplier.value);
+    const bossDone = allTasks.filter(task => task.boss && state.today.completed[task.id]);
+    const sleepDone = Boolean(state.today.completed["sleep-2330"]);
+
+    let judgment = "FAIL";
+    if(bossDone.length >= 2 && sleepDone){
+      judgment = "PERFECT";
+    }else if(bossDone.length >= 1 && baseFinalXp >= 200){
+      judgment = "PASS";
+    }else if(baseFinalXp >= 100){
+      judgment = "SAVE";
+    }
+
+    if(judgment === "FAIL" && state.today.flags.accidentShield){
+      judgment = "SAVE";
+    }
+
+    const perfectBonus = judgment === "PERFECT" ? 50 : 0;
+    const finalXp = baseFinalXp + perfectBonus;
+    return {
+      completedTasks,
+      rawXp,
+      multiplier,
+      baseFinalXp,
+      perfectBonus,
+      finalXp,
+      bossDone,
+      sleepDone,
+      judgment,
+      completedCount:completedTasks.length,
+      totalTaskCount:getTodayTasks().length
+    };
+  }
+
+  function getTodayTasks(){
+    return [
+      ...allTasks,
+      ...(state.today.debtTasks || []).map(task => ({
+        id:task.id,
+        name:task.name,
+        desc:task.desc || "债务任务，完成后作为惩罚履约记录",
+        xp:Number(task.xp || 0),
+        debt:true,
+        zoneId:task.zoneId || "morning",
+        zoneTitle:"惩罚债务"
+      }))
+    ];
+  }
+
+  function computeRealm(totalXp, streak, realmDropOffset){
+    const effectiveXp = Math.max(0, Number(totalXp || 0) - Number(realmDropOffset || 0));
+    for(let i = 0; i < flatRealms.length; i += 1){
+      const rank = flatRealms[i];
+      const next = flatRealms[i + 1] || null;
+      const enoughXpForNext = effectiveXp >= rank.endXp;
+      const enoughStreakForNext = !next || streak >= next.streakReq;
+
+      if(enoughXpForNext && enoughStreakForNext && next){
+        continue;
+      }
+
+      const lockedAtBreakthrough = enoughXpForNext && next && !enoughStreakForNext;
+      const xpInside = lockedAtBreakthrough ? rank.totalXp - 1 : Math.max(0, Math.min(effectiveXp - rank.startXp, rank.totalXp - 1));
+      const layer = Math.min(12, Math.floor(xpInside / rank.layerXp) + 1);
+      const nextLayerTarget = layer < 12 ? rank.startXp + layer * rank.layerXp : rank.endXp;
+      const nextXpNeeded = Math.max(0, nextLayerTarget - effectiveXp);
+      const progress = Math.max(0, Math.min(100, (xpInside / rank.totalXp) * 100));
+      return {
+        ...rank,
+        layer,
+        progress,
+        effectiveXp,
+        nextXpNeeded,
+        nextBreakthroughStreak:next ? next.streakReq : null,
+        blockedByStreak:lockedAtBreakthrough,
+        display:`${rank.name} ${layer} 层`
+      };
+    }
+
+    const last = flatRealms[flatRealms.length - 1];
+    return {...last, layer:12, progress:100, effectiveXp, nextXpNeeded:0, nextBreakthroughStreak:null, blockedByStreak:false, display:`${last.name} 12 层`};
+  }
+
+  /* =========================
+     localStorage 存储
+  ========================= */
+  function exportData(){
+    persist();
+    const payload = JSON.stringify(state, null, 2);
+    const blob = new Blob([payload], {type:"application/json"});
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `修炼系统数据_${todayKey()}.json`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+    toast("数据已导出为 JSON。");
+  }
+
+  function importData(file){
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try{
+        const parsed = JSON.parse(String(reader.result || ""));
+        if(!confirm("导入会覆盖当前本地数据。确定继续？")) return;
+        state = normalizeState(parsed);
+        persist();
+        renderAll();
+        toast("导入完成，数据已恢复。");
+      }catch(error){
+        toast("导入失败：JSON 格式不正确。");
+      }
+    };
+    reader.readAsText(file, "UTF-8");
+  }
+
+  /* =========================
+     免费自动同步
+  ========================= */
+  function loadSyncSettings(){
+    const raw = localStorage.getItem(SYNC_SETTINGS_KEY);
+    if(!raw) return {enabled:false, endpoint:DEFAULT_SYNC_ENDPOINT, secret:""};
+    try{
+      return {...{enabled:false, endpoint:DEFAULT_SYNC_ENDPOINT, secret:""}, ...JSON.parse(raw)};
+    }catch(error){
+      return {enabled:false, endpoint:DEFAULT_SYNC_ENDPOINT, secret:""};
+    }
+  }
+
+  function saveSyncSettings(){
+    localStorage.setItem(SYNC_SETTINGS_KEY, JSON.stringify(syncSettings));
+  }
+
+  function scheduleAutoSync(){
+    if(!syncSettings.enabled) return;
+    clearTimeout(syncState.timer);
+    syncState.timer = setTimeout(() => {
+      requestBackgroundSync("auto");
+    }, SYNC_DEBOUNCE_MS);
+  }
+
+  function requestBackgroundSync(reason){
+    if(!syncSettings.enabled) return;
+    syncNow(reason).catch(error => markSyncFailure(error, "自动同步失败"));
+  }
+
+  function startSyncPolling(){
+    stopSyncPolling();
+    if(!syncSettings.enabled) return;
+    syncState.pollTimer = setInterval(() => {
+      if(document.visibilityState === "hidden" || navigator.onLine === false) return;
+      requestBackgroundSync("poll");
+    }, SYNC_POLL_MS);
+  }
+
+  function stopSyncPolling(){
+    if(syncState.pollTimer){
+      clearInterval(syncState.pollTimer);
+      syncState.pollTimer = null;
+    }
+  }
+
+  function markSyncFailure(error, status){
+    syncState.error = error.message || String(error);
+    syncState.status = status;
+    renderSyncPanel();
+  }
+
+  async function enableSync(){
+    const endpoint = document.querySelector("#sync-endpoint").value.trim().replace(/\/+$/, "");
+    const secret = document.querySelector("#sync-secret").value.trim();
+    if(!endpoint || !secret){
+      toast("请先填写 Worker 地址和同步密钥。");
+      return;
+    }
+    if(secret.length < 12 && !confirm("同步密钥少于 12 个字符，安全性较弱。仍要继续？")) return;
+    syncSettings = {enabled:true, endpoint, secret};
+    saveSyncSettings();
+    await syncNow("setup");
+    startSyncPolling();
+    toast("自动同步已开启。");
+  }
+
+  function disableSync(){
+    if(!confirm("确认关闭自动同步？云端密文不会删除，本机只停止自动拉取和上传。")) return;
+    syncSettings = {...syncSettings, enabled:false};
+    saveSyncSettings();
+    clearTimeout(syncState.timer);
+    stopSyncPolling();
+    syncState.status = "已关闭同步";
+    syncState.error = "";
+    renderSyncPanel();
+    toast("自动同步已关闭。");
+  }
+
+  function generateSyncSecret(){
+    const bytes = crypto.getRandomValues(new Uint8Array(24));
+    const secret = bytesToBase64(bytes).replace(/[+/=]/g, "").slice(0, 28);
+    document.querySelector("#sync-secret").value = secret;
+    syncSettings.secret = secret;
+    saveSyncSettings();
+    renderSyncPanel();
+    toast("已生成同步密钥。请在手机和电脑填写同一个密钥。");
+  }
+
+  async function syncNow(reason = "manual"){
+    if(syncState.busy){
+      syncState.pending = true;
+      return;
+    }
+    const settings = {...syncSettings};
+    if(!settings.endpoint || !settings.secret){
+      toast("同步未配置：请填写 Worker 地址和同步密钥。");
+      return;
+    }
+    if(!crypto.subtle){
+      toast("当前浏览器不支持 Web Crypto，无法加密同步。");
+      return;
+    }
+
+    syncState.busy = true;
+    syncState.pending = false;
+    syncState.status = ["auto", "poll", "focus", "visible", "online"].includes(reason) ? "自动同步中..." : "同步中...";
+    syncState.error = "";
+    renderSyncPanel();
+
+    try{
+      const syncId = await deriveSyncId(settings.secret);
+      const remote = await fetchRemoteState(settings.endpoint, syncId);
+      let nextState = state;
+      if(remote && remote.payload){
+        const decrypted = await decryptPayload(remote.payload, settings.secret);
+        nextState = mergeStates(state, normalizeState(decrypted));
+      }
+      state = normalizeState(nextState);
+      persist({sync:false, touch:false});
+
+      const payload = await encryptPayload(state, settings.secret);
+      await putRemoteState(settings.endpoint, syncId, payload);
+      syncState.lastSyncAt = new Date().toISOString();
+      syncState.status = "同步完成";
+      renderAll();
+    }catch(error){
+      markSyncFailure(error, "同步失败");
+      throw error;
+    }finally{
+      syncState.busy = false;
+      renderSyncPanel();
+      if(syncState.pending && syncSettings.enabled){
+        scheduleAutoSync();
+      }
+    }
+  }
+
+  async function fetchRemoteState(endpoint, syncId){
+    const response = await fetch(`${endpoint}/sync/${syncId}`, {
+      method:"GET",
+      headers:{"Accept":"application/json"}
+    });
+    if(response.status === 404) return null;
+    if(!response.ok) throw new Error(`云端拉取失败：HTTP ${response.status}`);
+    const data = await response.json();
+    return data.exists ? data : null;
+  }
+
+  async function putRemoteState(endpoint, syncId, payload){
+    const response = await fetch(`${endpoint}/sync/${syncId}`, {
+      method:"PUT",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({
+        payload,
+        clientUpdatedAt:state.meta.updatedAt,
+        deviceId:getDeviceId()
+      })
+    });
+    if(!response.ok) throw new Error(`云端上传失败：HTTP ${response.status}`);
+    return response.json();
+  }
+
+  function mergeStates(local, remote){
+    const merged = normalizeState(local);
+    const remoteState = normalizeState(remote);
+    const localNewer = String(local.meta && local.meta.updatedAt || "") >= String(remoteState.meta && remoteState.meta.updatedAt || "");
+    merged.history = mergeByKey(local.history, remoteState.history, "date", item => item.settledAt || item.date);
+    merged.redemptions = mergeByKey(local.redemptions, remoteState.redemptions, "id", item => item.date || "");
+    merged.penalties = mergeByKey(local.penalties, remoteState.penalties, "id", item => item.date || "");
+    merged.today = mergeToday(local.today, remoteState.today, localNewer);
+    merged.amulets = mergeAmulets(local.amulets, remoteState.amulets);
+    merged.effects = {
+      sleepPenaltyDate:maxDate(local.effects && local.effects.sleepPenaltyDate, remoteState.effects && remoteState.effects.sleepPenaltyDate)
+    };
+    merged.meta = {
+      updatedAt:maxDate(local.meta && local.meta.updatedAt, remoteState.meta && remoteState.meta.updatedAt) || new Date().toISOString(),
+      deviceId:getDeviceId()
+    };
+    return normalizeState(merged);
+  }
+
+  function mergeByKey(a = [], b = [], key, stampFn){
+    const map = new Map();
+    [...a, ...b].forEach(item => {
+      if(!item || !item[key]) return;
+      const current = map.get(item[key]);
+      if(!current || String(stampFn(item)) >= String(stampFn(current))){
+        map.set(item[key], item);
+      }
+    });
+    return [...map.values()].sort((x, y) => String(x[key]).localeCompare(String(y[key])));
+  }
+
+  function mergeToday(localToday, remoteToday, localNewer){
+    const today = defaultToday(todayKey());
+    const localSame = localToday && localToday.date === today.date;
+    const remoteSame = remoteToday && remoteToday.date === today.date;
+    const base = localNewer ? localToday : remoteToday;
+    const other = localNewer ? remoteToday : localToday;
+    if(base && base.date === today.date) Object.assign(today, JSON.parse(JSON.stringify(base)));
+    if(other && other.date === today.date){
+      today.completed = {...(other.completed || {}), ...(today.completed || {})};
+      today.debtTasks = mergeByKey(today.debtTasks || [], other.debtTasks || [], "id", item => item.id);
+      today.plans = [0, 1].map(index => ({
+        result:(today.plans[index] && today.plans[index].result) || (other.plans && other.plans[index] && other.plans[index].result) || "",
+        block:(today.plans[index] && today.plans[index].block) || (other.plans && other.plans[index] && other.plans[index].block) || "",
+        stop:(today.plans[index] && today.plans[index].stop) || (other.plans && other.plans[index] && other.plans[index].stop) || ""
+      }));
+      today.flags = {...(other.flags || {}), ...(today.flags || {})};
+    }
+    if(!localSame && remoteSame) return normalizeState({today, history:[], redemptions:[], penalties:[]}).today;
+    return today;
+  }
+
+  function mergeAmulets(local, remote){
+    const month = monthKey();
+    const localUsed = local && local.month === month ? Number(local.used || 0) : 0;
+    const remoteUsed = remote && remote.month === month ? Number(remote.used || 0) : 0;
+    return {month, used:Math.max(localUsed, remoteUsed)};
+  }
+
+  async function deriveSyncId(secret){
+    const digest = await crypto.subtle.digest("SHA-256", textBytes(`cultivation-sync-id:${secret}`));
+    return bytesToHex(new Uint8Array(digest)).slice(0, 40);
+  }
+
+  async function deriveCryptoKey(secret, salt){
+    const baseKey = await crypto.subtle.importKey("raw", textBytes(secret), "HKDF", false, ["deriveKey"]);
+    return crypto.subtle.deriveKey(
+      {name:"HKDF", salt, info:textBytes("cultivation-sync-v1"), hash:"SHA-256"},
+      baseKey,
+      {name:"AES-GCM", length:256},
+      false,
+      ["encrypt", "decrypt"]
+    );
+  }
+
+  async function encryptPayload(data, secret){
+    const salt = crypto.getRandomValues(new Uint8Array(16));
+    const iv = crypto.getRandomValues(new Uint8Array(12));
+    const key = await deriveCryptoKey(secret, salt);
+    const plain = textBytes(JSON.stringify(data));
+    const cipher = await crypto.subtle.encrypt({name:"AES-GCM", iv}, key, plain);
+    return {
+      version:1,
+      alg:"AES-GCM",
+      kdf:"HKDF-SHA256",
+      salt:bytesToBase64(salt),
+      iv:bytesToBase64(iv),
+      data:bytesToBase64(new Uint8Array(cipher))
+    };
+  }
+
+  async function decryptPayload(payload, secret){
+    const salt = base64ToBytes(payload.salt);
+    const iv = base64ToBytes(payload.iv);
+    const cipher = base64ToBytes(payload.data);
+    const key = await deriveCryptoKey(secret, salt);
+    const plain = await crypto.subtle.decrypt({name:"AES-GCM", iv}, key, cipher);
+    return JSON.parse(new TextDecoder().decode(plain));
+  }
+
+  function renderSyncPanel(){
+    const endpointInput = document.querySelector("#sync-endpoint");
+    const secretInput = document.querySelector("#sync-secret");
+    const status = document.querySelector("#sync-status");
+    if(!endpointInput || !secretInput || !status) return;
+    if(document.activeElement !== endpointInput) endpointInput.value = syncSettings.endpoint || "";
+    if(document.activeElement !== secretInput) secretInput.value = syncSettings.secret || "";
+    const enabled = syncSettings.enabled ? "已开启" : "未开启";
+    const last = syncState.lastSyncAt ? new Date(syncState.lastSyncAt).toLocaleString() : "尚未同步";
+    const error = syncState.error ? ` · ${syncState.error}` : "";
+    status.textContent = `状态：${enabled} · ${syncState.status} · 上次：${last}${error}`;
+  }
+
+  /* =========================
+     渲染函数
+  ========================= */
+  function renderAll(){
+    renderTopStatus();
+    renderToday();
+    renderSettle();
+    renderShop();
+    renderRealm();
+    renderHistory();
+    setView(activeView);
+  }
+
+  function renderTopStatus(){
+    const metrics = computeMetrics();
+    const realm = state.profile.realm;
+    const status = document.querySelector("#top-status");
+    status.innerHTML = [
+      statusChip("今日 XP", `${metrics.finalXp}`),
+      statusChip("倍率", `×${metrics.multiplier.value.toFixed(1)}`),
+      statusChip("判定", metrics.judgment, `judge-${metrics.judgment.toLowerCase()}`),
+      statusChip("连击", `${state.profile.streak} 天`),
+      statusChip("境界", realm.display)
+    ].join("");
+  }
+
+  function statusChip(label, value, className = ""){
+    return `<div class="status-chip ${className}"><span class="k">${escapeHtml(label)}</span><span class="v">${escapeHtml(value)}</span></div>`;
+  }
+
+  function renderToday(){
+    const metrics = computeMetrics();
+    document.querySelector("#today-date-label").textContent = `${state.today.date} · 打开即可勾选任务`;
+    document.querySelector("#today-judge-badge").outerHTML = judgeBadge(metrics.judgment, "today-judge-badge");
+    document.querySelector("#multiplier-badge").textContent = `×${metrics.multiplier.value.toFixed(1)} · ${metrics.multiplier.label}`;
+    document.querySelector("#quick-metrics").innerHTML = [
+      metric("原始任务 XP", metrics.rawXp, `${metrics.completedCount}/${metrics.totalTaskCount} 任务完成`),
+      metric("状态倍率", `×${metrics.multiplier.value.toFixed(1)}`, `平均 ${metrics.multiplier.avg.toFixed(1)}`),
+      metric("PERFECT 额外", `+${metrics.perfectBonus}`, "双 BOSS + 23:30 前入睡"),
+      metric("最终今日 XP", metrics.finalXp, "结算时写入历史", "strong")
+    ].join("");
+    renderRatings();
+    renderZones();
+  }
+
+  function renderRatings(){
+    const energyMax = state.effects.sleepPenaltyDate === state.today.date ? 7 : 10;
+    const list = document.querySelector("#rating-list");
+    list.innerHTML = ratingConfig.map(item => {
+      const max = item.key === "energy" ? energyMax : 10;
+      const value = Math.min(max, Number(state.today.ratings[item.key] || 0));
+      return `
+        <div class="rating-row">
+          <label for="rating-${item.key}">${item.label}<br><small>${item.code}</small></label>
+          <input id="rating-${item.key}" type="range" min="0" max="${max}" step="1" value="${value}" data-rating="${item.key}">
+          <output>${value}/${max}</output>
+        </div>`;
+    }).join("");
+    const mult = multiplierForRatings(state.today.ratings);
+    const alert = document.querySelector("#health-alert");
+    const capped = state.effects.sleepPenaltyDate === state.today.date;
+    const messages = [];
+    if(mult.value === 0.6) messages.push("亚健康预警，建议强制早睡。");
+    if(capped) messages.push("熬夜惩罚生效：今日体力上限 -3。");
+    alert.textContent = messages.join(" ");
+    alert.classList.toggle("show", messages.length > 0);
+  }
+
+  function renderZones(){
+    const container = document.querySelector("#today-zones");
+    const todayTasks = getTodayTasks();
+    container.innerHTML = zones.map(zone => {
+      const zoneTasks = todayTasks.filter(task => task.zoneId === zone.id);
+      const done = zoneTasks.filter(task => state.today.completed[task.id]).length;
+      const xp = zoneTasks.filter(task => state.today.completed[task.id]).reduce((sum, task) => sum + Number(task.xp || 0), 0);
+      const debtTasks = zone.id === "morning" ? todayTasks.filter(task => task.debt) : [];
+      const isOpen = uiState.openZones.has(zone.id);
+      return `
+        <details class="zone" data-zone-id="${escapeAttr(zone.id)}" ${isOpen ? "open" : ""}>
+          <summary>
+            <span class="zone-name">
+              <span class="zone-icon">${zone.icon}</span>
+              <span class="zone-copy"><b>${escapeHtml(zone.title)}</b><span>${escapeHtml(zone.time)} · ${done}/${zoneTasks.length} 完成</span></span>
+            </span>
+            <span class="zone-score">+${xp} XP</span>
+          </summary>
+          <div class="zone-body">
+            ${zone.groups.map(group => renderGroup(group)).join("")}
+            ${debtTasks.length ? `<div class="group-title">DEBT · 惩罚债务任务</div>${debtTasks.map(renderTask).join("")}` : ""}
+          </div>
+        </details>`;
+    }).join("");
+  }
+
+  function renderGroup(group){
+    if(group.type === "plans"){
+      return `<div class="group-title">${escapeHtml(group.title)}</div>${renderPlans()}`;
+    }
+    return `
+      <div class="group-title">${escapeHtml(group.title)}</div>
+      ${(group.tasks || []).map(renderTask).join("")}
+      ${group.protocol ? `<div class="protocol-line">禁止协议 // ${escapeHtml(group.protocol)}</div>` : ""}`;
+  }
+
+  function renderTask(task){
+    const done = Boolean(state.today.completed[task.id]);
+    const flags = [
+      task.boss ? `<span class="badge boss">BOSS</span>` : "",
+      task.optional ? `<span class="badge">可选</span>` : "",
+      task.debt ? `<span class="badge red">债务</span>` : ""
+    ].filter(Boolean).join("");
+    return `
+      <button class="task-row ${done ? "done" : ""} ${task.boss ? "boss" : ""} ${task.debt ? "debt" : ""}" type="button" data-task-id="${escapeAttr(task.id)}" aria-pressed="${done}">
+        <span class="task-check">✓</span>
+        <span class="task-copy"><b>${escapeHtml(task.name)}</b>${task.desc ? `<small>${escapeHtml(task.desc)}</small>` : ""}</span>
+        <span class="task-tags">${flags}<span class="badge xp">+${Number(task.xp || 0)} XP</span></span>
+      </button>`;
+  }
+
+  function renderPlans(){
+    return `
+      <div class="plan-grid">
+        ${state.today.plans.map((plan, index) => `
+          <div class="plan-box">
+            <b>PRIMARY OBJECTIVE #${index + 1}</b>
+            <div class="form-row">
+              <label>成果</label>
+              <input type="text" value="${escapeAttr(plan.result)}" data-plan-index="${index}" data-plan-field="result" placeholder="今天必须产出的认知成果">
+            </div>
+            <div class="form-row">
+              <label>深度块时间</label>
+              <input type="text" value="${escapeAttr(plan.block)}" data-plan-index="${index}" data-plan-field="block" placeholder="例如 09:20-11:40">
+            </div>
+            <div class="form-row">
+              <label>停止点</label>
+              <input type="text" value="${escapeAttr(plan.stop)}" data-plan-index="${index}" data-plan-field="stop" placeholder="到什么程度就停，未完成记录问题">
+            </div>
+          </div>`).join("")}
+      </div>`;
+  }
+
+  function renderSettle(){
+    const metrics = computeMetrics();
+    const realm = state.profile.realm;
+    document.querySelector("#settle-judge-badge").outerHTML = judgeBadge(metrics.judgment, "settle-judge-badge");
+    document.querySelector("#settlement-grid").innerHTML = [
+      metric("原始任务 XP", metrics.rawXp, "已完成任务 XP 合计"),
+      metric("状态倍率", `×${metrics.multiplier.value.toFixed(1)}`, metrics.multiplier.label),
+      metric("PERFECT 额外 XP", `+${metrics.perfectBonus}`, "仅 PERFECT 生效"),
+      metric("最终今日 XP", metrics.finalXp, "结算写入累计", "strong"),
+      metric("累计总 XP", state.profile.totalXp, "决定长期境界"),
+      metric("可消费余额", state.profile.spendableXp, "商店兑换扣这里"),
+      metric("当前境界", realm.display, realm.world),
+      metric("下一层还差", `${realm.nextXpNeeded} XP`, realm.blockedByStreak ? `等待连击 ${realm.nextBreakthroughStreak} 天` : "继续推进")
+    ].join("");
+    document.querySelector("#amulet-badge").textContent = `免罚符 ${Math.max(0, 2 - state.amulets.used)}/2`;
+    renderPenaltyLog();
+  }
+
+  function renderPenaltyLog(){
+    const target = document.querySelector("#penalty-log");
+    const recent = [...state.penalties].reverse().slice(0, 5);
+    if(!recent.length){
+      target.innerHTML = `<div class="empty">暂无惩罚或异常记录。</div>`;
+      return;
+    }
+    target.innerHTML = recent.map(item => `
+      <div class="history-item">
+        <div class="history-main">
+          <div><b>${escapeHtml(item.name)}</b><br><span>${escapeHtml(item.date)} · ${escapeHtml(item.note || "")}</span></div>
+          ${item.amount ? `<span class="badge red">-${item.amount} XP</span>` : `<span class="badge">记录</span>`}
+        </div>
+      </div>`).join("");
+  }
+
+  function renderShop(){
+    const frozen = isShopFrozen();
+    const freezeAlert = document.querySelector("#shop-freeze-alert");
+    const balance = state.profile.spendableXp;
+    document.querySelector("#shop-balance").textContent = `余额 ${balance} XP`;
+    freezeAlert.textContent = frozen ? `商店冻结中：冻结至 ${state.profile.shopFrozenUntil}，今日不可兑换娱乐奖励。` : "";
+    freezeAlert.classList.toggle("show", frozen);
+    document.querySelector("#shop-grid").innerHTML = rewards.map(reward => {
+      const locked = reward.requires && !isRealmUnlocked(reward.requires);
+      const disabled = frozen || locked || balance < reward.cost;
+      let buttonText = "兑换";
+      if(frozen) buttonText = "冻结中";
+      else if(locked) buttonText = `需 ${reward.requires}`;
+      else if(balance < reward.cost) buttonText = `差 ${reward.cost - balance}`;
+      return `
+        <div class="shop-card ${locked ? "locked" : ""} ${frozen ? "frozen" : ""}">
+          <div class="shop-top">
+            <div><b>${escapeHtml(reward.name)}</b><small>${escapeHtml(reward.desc)}</small></div>
+            <span class="badge xp">${reward.cost} XP</span>
+          </div>
+          ${reward.requires ? `<span class="badge gold">解锁：${escapeHtml(reward.requires)}</span>` : `<span class="badge green">当前可解锁</span>`}
+          <button class="btn gold" type="button" data-reward-id="${escapeAttr(reward.id)}" ${disabled ? "disabled" : ""}>${escapeHtml(buttonText)}</button>
+        </div>`;
+    }).join("");
+  }
+
+  function renderRealm(){
+    const realm = state.profile.realm;
+    document.querySelector("#realm-badge").textContent = `${realm.world} · ${realm.display}`;
+    document.querySelector("#realm-hero").innerHTML = `
+      <div>
+        <div class="quick-metrics">
+          ${metric("大境界", realm.world, realm.code)}
+          ${metric("当前层数", `${realm.name} ${realm.layer}/12`, realm.blockedByStreak ? "XP 已满，等待连击突破" : "层级推进中")}
+          ${metric("累计总 XP", state.profile.totalXp, `境界有效 XP ${realm.effectiveXp}`)}
+          ${metric("突破连击", realm.nextBreakthroughStreak ? `${state.profile.streak}/${realm.nextBreakthroughStreak}` : "圆满", "下一次突破门槛")}
+        </div>
+      </div>
+      <div class="metric strong">
+        <span class="label">本境进度</span>
+        <div class="num">${Math.round(realm.progress)}%</div>
+        <div class="progress"><span style="width:${realm.progress}%"></span></div>
+        <div class="hint">${realm.nextXpNeeded ? `下一层还差 ${realm.nextXpNeeded} XP` : "XP 已到，检查连击门槛"}</div>
+      </div>`;
+
+    document.querySelector("#realm-map").innerHTML = realmWorlds.map(world => `
+      <details data-realm-world="${escapeAttr(world.world)}" ${uiState.openRealmWorlds.has(world.world) ? "open" : ""}>
+        <summary><b>${escapeHtml(world.world)}</b><span class="badge cyan">${escapeHtml(world.code)} · 每层 ${world.layerXp} XP</span></summary>
+        <div class="rank-grid">
+          ${flatRealms.filter(item => item.world === world.world).map(item => renderRankCard(item, realm)).join("")}
+        </div>
+      </details>`).join("");
+  }
+
+  function renderRankCard(rank, current){
+    const activeLayers = rank.index < current.index ? 12 : rank.index === current.index ? current.layer : 0;
+    return `
+      <div class="rank-card ${rank.index === current.index ? "current" : ""}">
+        <b>${escapeHtml(rank.name)}</b>
+        <small>${escapeHtml(rank.meta)} · ${rank.startXp}-${rank.endXp} XP</small>
+        <div class="layer-grid">${Array.from({length:12}, (_, i) => `<i class="${i < activeLayers ? "active" : ""}"></i>`).join("")}</div>
+      </div>`;
+  }
+
+  function renderHistory(){
+    const history = [...state.history].sort((a,b) => b.date.localeCompare(a.date));
+    document.querySelector("#history-count").textContent = `${history.length} 天`;
+    const recent7 = history.slice(0, 7);
+    const recent30 = history.slice(0, 30);
+    const total7 = recent7.reduce((sum, item) => sum + Number(item.finalXp || 0), 0);
+    const passPerfect = recent30.filter(item => item.judgment === "PASS" || item.judgment === "PERFECT").length;
+    const fails = recent30.filter(item => item.judgment === "FAIL").length;
+    document.querySelector("#history-stats").innerHTML = [
+      metric("7 日总 XP", total7, `${recent7.length} 天记录`),
+      metric("7 日平均 XP", recent7.length ? Math.round(total7 / recent7.length) : 0, "近 7 条记录"),
+      metric("PASS/PERFECT", passPerfect, "最近 30 天"),
+      metric("FAIL", fails, `当前连击 ${state.profile.streak}`)
+    ].join("");
+
+    document.querySelector("#history-list").innerHTML = history.length ? history.map(record => `
+      <div class="history-item">
+        <div class="history-main">
+          <div>
+            <b>${escapeHtml(record.date)}</b><br>
+            <span>${record.finalXp} XP · ${record.completedCount}/${record.totalTaskCount} 任务 · BOSS ${record.bossDone}/2</span>
+          </div>
+          ${judgeBadge(record.judgment)}
+        </div>
+        <div class="history-tags">
+          <span class="badge">连击 ${record.streakAfter || 0}</span>
+          <span class="badge cyan">倍率 ×${Number(record.multiplier || 1).toFixed(1)}</span>
+          <button class="btn danger" type="button" data-delete-history="${escapeAttr(record.date)}">删除</button>
+        </div>
+      </div>`).join("") : `<div class="empty">暂无历史记录。完成一次每日结算后，这里会出现统计。</div>`;
+
+    renderExchangeLog();
+    renderSyncPanel();
+  }
+
+  function renderExchangeLog(){
+    const target = document.querySelector("#exchange-log");
+    const recent = [...state.redemptions].reverse().slice(0, 6);
+    if(!recent.length){
+      target.innerHTML = `<div class="empty">暂无奖励兑换记录。</div>`;
+      return;
+    }
+    target.innerHTML = recent.map(item => `
+      <div class="history-item">
+        <div class="history-main">
+          <div><b>${escapeHtml(item.name)}</b><br><span>${escapeHtml(item.date)} · ${escapeHtml(item.realm || "")}</span></div>
+          <span class="badge xp">-${item.cost} XP</span>
+        </div>
+      </div>`).join("");
+  }
+
+  function metric(label, value, hint, extraClass = ""){
+    return `
+      <div class="metric ${extraClass}">
+        <span class="label">${escapeHtml(label)}</span>
+        <div class="num">${escapeHtml(value)}</div>
+        <div class="hint">${escapeHtml(hint || "")}</div>
+      </div>`;
+  }
+
+  function judgeBadge(judgment, id = ""){
+    const labelClass = {
+      PERFECT:"gold",
+      PASS:"green",
+      SAVE:"cyan",
+      FAIL:"red"
+    }[judgment] || "";
+    return `<span ${id ? `id="${id}"` : ""} class="badge ${labelClass}">${escapeHtml(judgment)}</span>`;
+  }
+
+  /* =========================
+     事件绑定
+  ========================= */
+  document.addEventListener("click", event => {
+    const viewButton = event.target.closest("[data-view]");
+    if(viewButton){
+      setView(viewButton.dataset.view);
+      return;
+    }
+
+    const taskButton = event.target.closest("[data-task-id]");
+    if(taskButton){
+      toggleTask(taskButton.dataset.taskId);
+      return;
+    }
+
+    const rewardButton = event.target.closest("[data-reward-id]");
+    if(rewardButton){
+      redeemReward(rewardButton.dataset.rewardId);
+      return;
+    }
+
+    const deleteButton = event.target.closest("[data-delete-history]");
+    if(deleteButton){
+      deleteHistory(deleteButton.dataset.deleteHistory);
+      return;
+    }
+
+    const actionButton = event.target.closest("[data-action]");
+    if(actionButton){
+      handleAction(actionButton.dataset.action);
+    }
+  });
+
+  document.addEventListener("toggle", event => {
+    const zoneDetails = event.target.matches("details.zone") ? event.target : null;
+    if(zoneDetails && zoneDetails.dataset.zoneId){
+      if(zoneDetails.open) uiState.openZones.add(zoneDetails.dataset.zoneId);
+      else uiState.openZones.delete(zoneDetails.dataset.zoneId);
+      return;
+    }
+
+    const realmDetails = event.target.matches("details[data-realm-world]") ? event.target : null;
+    if(realmDetails && realmDetails.dataset.realmWorld){
+      if(realmDetails.open) uiState.openRealmWorlds.add(realmDetails.dataset.realmWorld);
+      else uiState.openRealmWorlds.delete(realmDetails.dataset.realmWorld);
+    }
+  }, true);
+
+  document.addEventListener("input", event => {
+    const rating = event.target.closest("[data-rating]");
+    if(rating){
+      const key = rating.dataset.rating;
+      state.today.ratings[key] = Number(rating.value);
+      persist();
+      renderAll();
+      return;
+    }
+
+    const planInput = event.target.closest("[data-plan-index]");
+    if(planInput){
+      const index = Number(planInput.dataset.planIndex);
+      const field = planInput.dataset.planField;
+      state.today.plans[index][field] = planInput.value;
+      persist();
+      renderTopStatus();
+      renderSettle();
+      return;
+    }
+
+    if(event.target.id === "sync-endpoint"){
+      syncSettings.endpoint = event.target.value.trim().replace(/\/+$/, "");
+      saveSyncSettings();
+      renderSyncPanel();
+      return;
+    }
+
+    if(event.target.id === "sync-secret"){
+      syncSettings.secret = event.target.value.trim();
+      saveSyncSettings();
+      renderSyncPanel();
+    }
+  });
+
+  document.querySelector("#import-file").addEventListener("change", event => {
+    importData(event.target.files[0]);
+    event.target.value = "";
+  });
+
+  window.addEventListener("beforeinstallprompt", event => {
+    event.preventDefault();
+    deferredInstallPrompt = event;
+    toast("安装入口已就绪，可点击右上角安装按钮。");
+  });
+
+  document.addEventListener("visibilitychange", () => {
+    if(document.visibilityState === "visible") requestBackgroundSync("visible");
+  });
+
+  window.addEventListener("focus", () => requestBackgroundSync("focus"));
+  window.addEventListener("online", () => requestBackgroundSync("online"));
+
+  function handleAction(action){
+    if(action === "settle") settleToday();
+    if(action === "reset-today") resetToday();
+    if(action === "reset-all") resetAll();
+    if(action === "export-data") exportData();
+    if(action === "enable-sync") enableSync();
+    if(action === "disable-sync") disableSync();
+    if(action === "sync-now") syncNow("manual").then(() => toast("同步完成。")).catch(error => toast(error.message));
+    if(action === "generate-sync-secret") generateSyncSecret();
+    if(action === "print") window.print();
+    if(action === "install-app") installApp();
+    if(action === "penalty-free-ride") markFreeRide();
+    if(action === "penalty-late-night") markLateNight();
+    if(action === "use-amulet") useAmulet(false);
+    if(action === "accident-day") useAmulet(true);
+  }
+
+  function setView(view){
+    activeView = VIEWS.includes(view) ? view : "today";
+    document.querySelectorAll(".view").forEach(section => {
+      section.classList.toggle("active", section.id === `view-${activeView}`);
+    });
+    document.querySelectorAll(".nav-btn").forEach(button => {
+      button.classList.toggle("active", button.dataset.view === activeView);
+    });
+  }
+
+  function toggleTask(id){
+    state.today.completed[id] = !state.today.completed[id];
+    if(!state.today.completed[id]) delete state.today.completed[id];
+    persist();
+    renderAll();
+  }
+
+  function settleToday(){
+    const metrics = computeMetrics();
+    const existing = state.history.some(item => item.date === state.today.date);
+    if(!confirm(`确认结算 ${state.today.date}？\n判定：${metrics.judgment}\n获得：${metrics.finalXp} XP`)) return;
+    if(existing && !confirm("今天已有结算记录。确定覆盖今天记录？取消则不改动。")) return;
+
+    state.penalties = state.penalties.filter(item => !(item.auto && item.date === state.today.date));
+    const previousHistory = state.history.filter(item => item.date !== state.today.date);
+    const previousLast = [...previousHistory].sort((a,b) => a.date.localeCompare(b.date)).at(-1);
+    const record = {
+      date:state.today.date,
+      rawXp:metrics.rawXp,
+      multiplier:metrics.multiplier.value,
+      perfectBonus:metrics.perfectBonus,
+      finalXp:metrics.finalXp,
+      judgment:metrics.judgment,
+      completedCount:metrics.completedCount,
+      totalTaskCount:metrics.totalTaskCount,
+      bossDone:metrics.bossDone.length,
+      sleepDone:metrics.sleepDone,
+      ratings:{...state.today.ratings},
+      plans:JSON.parse(JSON.stringify(state.today.plans)),
+      completedIds:metrics.completedTasks.map(task => task.id),
+      settledAt:new Date().toISOString()
+    };
+    state.history = [...previousHistory, record];
+    recalculateProfile(state);
+
+    if(record.judgment === "FAIL" && previousLast && previousLast.judgment === "FAIL"){
+      const currentRealm = computeRealm(state.profile.totalXp, state.profile.streak, 0);
+      state.penalties.push({
+        id:uid("drop"),
+        date:state.today.date,
+        type:"realm-drop",
+        name:"连续 FAIL · 掉境协议",
+        note:"连续 2 天 FAIL，连击归零并施加 1 层境界惩罚。",
+        amount:0,
+        realmDropOffset:currentRealm.layerXp,
+        auto:true
+      });
+    }
+
+    persist();
+    renderAll();
+    toast(`今日已结算：${metrics.judgment}，获得 ${metrics.finalXp} XP。`);
+  }
+
+  function redeemReward(id){
+    const reward = rewards.find(item => item.id === id);
+    if(!reward) return;
+    if(isShopFrozen()){
+      toast("商店冻结中，今日不可兑换。");
+      return;
+    }
+    if(reward.requires && !isRealmUnlocked(reward.requires)){
+      toast(`境界未解锁：需要达到 ${reward.requires}。`);
+      return;
+    }
+    if(state.profile.spendableXp < reward.cost){
+      toast(`XP 余额不足，还差 ${reward.cost - state.profile.spendableXp} XP。`);
+      return;
+    }
+    if(!confirm(`确认兑换「${reward.name}」？\n消耗 ${reward.cost} XP。`)) return;
+    state.redemptions.push({
+      id:uid("reward"),
+      date:todayKey(),
+      rewardId:reward.id,
+      name:reward.name,
+      cost:reward.cost,
+      realm:state.profile.realm.display
+    });
+    persist();
+    renderAll();
+    toast(`已兑换：${reward.name}，扣除 ${reward.cost} XP。`);
+  }
+
+  function markFreeRide(){
+    const metrics = computeMetrics();
+    const amount = Math.max(1, metrics.finalXp * 2);
+    if(!confirm(`确认标记白嫖娱乐？\n将从可消费 XP 中扣除当日所得 ×2：${amount} XP，并生成债务任务。`)) return;
+    state.penalties.push({
+      id:uid("penalty"),
+      date:state.today.date,
+      type:"free-ride",
+      name:"白嫖娱乐",
+      note:"扣除当日所得 ×2，并生成次日深度块债务。",
+      amount
+    });
+    const debtId = `debt-${state.today.date}-${state.today.debtTasks.length + 1}`;
+    state.today.debtTasks.push({
+      id:debtId,
+      name:"债务任务：补做 1 个深度块",
+      desc:"白嫖娱乐触发，完成后视为还债",
+      xp:0,
+      zoneId:"morning"
+    });
+    persist();
+    renderAll();
+    toast(`惩罚已记录：-${amount} XP，并生成债务任务。`);
+  }
+
+  function markLateNight(){
+    const penaltyDate = addDays(state.today.date, 1);
+    if(!confirm(`确认标记熬夜？\n次日 ${penaltyDate} 体力上限 -3，且当晚娱乐奖励作废。`)) return;
+    state.effects.sleepPenaltyDate = penaltyDate;
+    state.penalties.push({
+      id:uid("penalty"),
+      date:state.today.date,
+      type:"late-night",
+      name:"熬夜",
+      note:`次日 ${penaltyDate} 体力上限 -3，当晚娱乐奖励作废。`,
+      amount:0
+    });
+    persist();
+    renderAll();
+    toast("熬夜惩罚已记录。");
+  }
+
+  function useAmulet(accident){
+    ensureAmuletMonth(state);
+    if(state.amulets.used >= 2){
+      toast("本月免罚符已用完。");
+      return;
+    }
+    const label = accident ? "生病/意外日" : "免罚符";
+    if(!confirm(`确认使用${label}？\n本月免罚符将消耗 1 张，今日可免判 FAIL。`)) return;
+    state.amulets.used += 1;
+    state.today.flags.accidentShield = true;
+    state.today.flags.accident = Boolean(accident);
+    state.penalties.push({
+      id:uid("amulet"),
+      date:state.today.date,
+      type:accident ? "accident-day" : "amulet",
+      name:accident ? "生病/意外日免罚" : "使用免罚符",
+      note:`本月第 ${state.amulets.used}/2 张，今日免判 FAIL。`,
+      amount:0
+    });
+    persist();
+    renderAll();
+    toast(`${label}已生效，今日免判 FAIL。`);
+  }
+
+  function resetToday(){
+    if(!confirm("确认重置今日？只清空今日任务、计划和评分，不清空累计 XP、商店、历史。")) return;
+    state.today = defaultToday(todayKey());
+    applyDailyEffects(state);
+    persist();
+    renderAll();
+    toast("今日已重置，累计数据未清空。");
+  }
+
+  function resetAll(){
+    if(!confirm("危险操作：确认重置全部本地数据？")) return;
+    if(!confirm("再次确认：历史、累计 XP、余额、兑换和惩罚记录都会清空。")) return;
+    state = defaultState();
+    persist();
+    renderAll();
+    toast("全部数据已重置。");
+  }
+
+  function deleteHistory(date){
+    if(!confirm(`确认删除 ${date} 的历史记录？该操作会重算累计 XP 和连击。`)) return;
+    state.history = state.history.filter(item => item.date !== date);
+    state.penalties = state.penalties.filter(item => !(item.auto && item.date === date));
+    persist();
+    renderAll();
+    toast(`${date} 记录已删除。`);
+  }
+
+  function installApp(){
+    if(deferredInstallPrompt){
+      deferredInstallPrompt.prompt();
+      deferredInstallPrompt.userChoice.finally(() => {
+        deferredInstallPrompt = null;
+      });
+      return;
+    }
+    toast("若浏览器支持安装，请使用地址栏安装图标或手机浏览器的“添加到主屏幕”。");
+  }
+
+  /* =========================
+     工具函数
+  ========================= */
+  function getDeviceId(){
+    let id = localStorage.getItem(DEVICE_ID_KEY);
+    if(!id){
+      id = uid("device");
+      localStorage.setItem(DEVICE_ID_KEY, id);
+    }
+    return id;
+  }
+
+  function textBytes(value){
+    return new TextEncoder().encode(String(value));
+  }
+
+  function bytesToHex(bytes){
+    return [...bytes].map(byte => byte.toString(16).padStart(2, "0")).join("");
+  }
+
+  function bytesToBase64(bytes){
+    let binary = "";
+    bytes.forEach(byte => binary += String.fromCharCode(byte));
+    return btoa(binary);
+  }
+
+  function base64ToBytes(value){
+    const binary = atob(value);
+    const bytes = new Uint8Array(binary.length);
+    for(let i = 0; i < binary.length; i += 1){
+      bytes[i] = binary.charCodeAt(i);
+    }
+    return bytes;
+  }
+
+  function isShopFrozen(){
+    return Boolean(state.profile.shopFrozenUntil && todayKey() <= state.profile.shopFrozenUntil);
+  }
+
+  function isRealmUnlocked(name){
+    const required = flatRealms.find(item => item.name === name);
+    if(!required) return true;
+    return state.profile.realm.index >= required.index;
+  }
+
+  function todayKey(){
+    return formatDateKey(new Date());
+  }
+
+  function formatDateKey(date){
+    const local = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
+    return local.toISOString().slice(0, 10);
+  }
+
+  function addDays(dateKey, days){
+    const date = new Date(`${dateKey}T00:00:00`);
+    date.setDate(date.getDate() + days);
+    return formatDateKey(date);
+  }
+
+  function monthKey(dateKey = todayKey()){
+    return dateKey.slice(0, 7);
+  }
+
+  function maxDate(a, b){
+    if(!a) return b;
+    if(!b) return a;
+    return a > b ? a : b;
+  }
+
+  function uid(prefix){
+    return `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
+  }
+
+  function toast(message){
+    const el = document.querySelector("#toast");
+    el.textContent = message;
+    el.classList.add("show");
+    clearTimeout(toast.timer);
+    toast.timer = setTimeout(() => el.classList.remove("show"), 2800);
+  }
+
+  function escapeHtml(value){
+    return String(value ?? "").replace(/[&<>"']/g, char => ({
+      "&":"&amp;",
+      "<":"&lt;",
+      ">":"&gt;",
+      '"':"&quot;",
+      "'":"&#39;"
+    })[char]);
+  }
+
+  function escapeAttr(value){
+    return escapeHtml(value);
+  }
+
+  /* =========================
+     PWA 注册
+  ========================= */
+  if("serviceWorker" in navigator){
+    window.addEventListener("load", () => {
+      navigator.serviceWorker.register("./sw.js").catch(() => {});
+    });
+  }
+
+  renderAll();
+  if(syncSettings.enabled){
+    startSyncPolling();
+    syncNow("startup").catch(error => {
+      markSyncFailure(error, "启动同步失败");
+    });
+  }
+})();
+</script>
+</body>
+</html>
